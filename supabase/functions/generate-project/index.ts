@@ -133,20 +133,22 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const systemPrompt = `You are Lurk Dev AI — a project generator assistant.
-Generate REAL project files that can be launched locally.
+Your job is to return ready-to-use project files, not instructions.
 Output ONLY strict JSON without markdown or extra text in this format:
 {
-  "summary": "short russian summary",
+  "summary": "short russian summary in past tense (what is already done)",
   "files": [
-    { "path": "relative/file/path.ext", "content": "file content" }
+    { "path": "relative/file/path.ext", "content": "full file content" }
   ]
 }
-Rules:
-- Return at least 8 files for a full project starter.
+Hard rules:
+- Return at least 8 files for a full starter or all changed files for an edit request.
 - Paths must be valid relative paths.
-- Content must be complete file contents.
+- Content must be complete file contents (no placeholders like TODO, "add code here", etc.).
 - The project must match the user request and be runnable.
+- Never explain how to do it. Never return tutorials, checklists, or pseudo-code.
 - Never answer as chat text. Always fill "files" with source files.
+- Summary must describe completed result (e.g. "Сделал ...", "Обновил ...").
 Project context: Name: "${projectName || "Unnamed"}", Description: "${projectDescription || "No description"}"
 Respond in Russian.`;
 
@@ -158,6 +160,33 @@ Respond in Russian.`;
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "generated_project",
+            schema: {
+              type: "object",
+              required: ["summary", "files"],
+              additionalProperties: false,
+              properties: {
+                summary: { type: "string" },
+                files: {
+                  type: "array",
+                  minItems: 1,
+                  items: {
+                    type: "object",
+                    required: ["path", "content"],
+                    additionalProperties: false,
+                    properties: {
+                      path: { type: "string" },
+                      content: { type: "string" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: prompt },
