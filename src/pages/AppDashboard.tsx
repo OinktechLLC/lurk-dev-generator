@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -19,18 +19,52 @@ interface Project {
 
 const AppDashboard = () => {
   const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [credits, setCredits] = useState<number>(5);
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const { toast } = useToast();
+  const quickStartHandledRef = useRef(false);
 
   useEffect(() => {
     if (!user) return;
     loadProjects();
     loadCredits();
   }, [user]);
+
+  useEffect(() => {
+    if (!user || quickStartHandledRef.current) return;
+
+    const promptFromLanding = localStorage.getItem("landing_quick_prompt")?.trim();
+    if (!promptFromLanding) return;
+
+    quickStartHandledRef.current = true;
+    localStorage.removeItem("landing_quick_prompt");
+
+    const autoCreate = async () => {
+      const projectName = promptFromLanding.slice(0, 120);
+      const { data, error } = await supabase
+        .from("projects")
+        .insert({ name: projectName, description: null, user_id: user.id })
+        .select()
+        .single();
+
+      if (error || !data) {
+        toast({
+          title: "Не удалось создать проект",
+          description: error?.message || "Попробуйте снова",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      navigate(`/app/project/${data.id}`);
+    };
+
+    autoCreate();
+  }, [navigate, toast, user]);
 
   const loadProjects = async () => {
     const { data } = await supabase

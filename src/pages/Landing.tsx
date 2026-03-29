@@ -1,6 +1,8 @@
-import { Link } from "react-router-dom";
-import { Zap, Shield, Clock, Sparkles, Code, Layers, Rocket, FileCode2, Stars } from "lucide-react";
+import { FormEvent, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Zap, Clock, Sparkles, Code, Layers, Rocket, FileCode2, Stars } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import auroraBg from "@/assets/aurora-bg.jpg";
 
 const features = [
@@ -19,6 +21,18 @@ const stats = [
 ];
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const [quickPrompt, setQuickPrompt] = useState("");
+
+  const handleQuickStart = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmedPrompt = quickPrompt.trim();
+    if (!trimmedPrompt) return;
+
+    localStorage.setItem("landing_quick_prompt", trimmedPrompt);
+    navigate("/auth");
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <img src={auroraBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-35 pointer-events-none" width={1920} height={1080} />
@@ -47,12 +61,22 @@ const Landing = () => {
               AI Website Generator
             </p>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-[1.05] tracking-tight text-foreground mb-5">
-              Генерируйте сайты как на
-              <span className="text-gradient"> lork.dev</span>
+              Генерируйте сайты из промпта
             </h1>
             <p className="text-base md:text-lg text-muted-foreground max-w-xl mb-8">
               Lurk Dev создаёт полноценные файлы проекта: структуру, компоненты, стили и готовый ZIP для запуска.
             </p>
+            <form onSubmit={handleQuickStart} className="flex flex-col sm:flex-row gap-3 mb-8 max-w-2xl">
+              <Input
+                value={quickPrompt}
+                onChange={(e) => setQuickPrompt(e.target.value)}
+                placeholder="Например: CRM для салона красоты"
+                className="bg-background/90 border-border"
+              />
+              <Button type="submit" size="lg" className="gradient-primary text-primary-foreground border-0 whitespace-nowrap">
+                Открыть чистый проект
+              </Button>
+            </form>
             <div className="flex flex-wrap gap-3 mb-8">
               <Link to="/app">
                 <Button size="lg" className="gradient-primary text-primary-foreground border-0 px-8">Открыть приложение</Button>
