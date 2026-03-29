@@ -53,6 +53,77 @@ function buildFallbackResult(prompt: string, projectName?: string | null) {
   };
 }
 
+function extractFirstJsonObject(input: string) {
+  const start = input.indexOf("{");
+  if (start < 0) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < input.length; i += 1) {
+    const char = input[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === "\"") {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = true;
+      continue;
+    }
+
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return input.slice(start, i + 1);
+    }
+  }
+
+  return null;
+}
+
+function parseProjectPayload(rawResult: unknown, prompt: string, projectName?: string | null) {
+  if (typeof rawResult !== "string") return buildFallbackResult(prompt, projectName);
+
+  const trimmed = rawResult.trim();
+  const jsonFromFence = trimmed.match(/```json\s*([\s\S]*?)```/i)?.[1]?.trim();
+  const genericFence = trimmed.match(/```[a-zA-Z0-9_-]*\s*([\s\S]*?)```/i)?.[1]?.trim();
+  const candidate = jsonFromFence || genericFence || extractFirstJsonObject(trimmed) || trimmed;
+
+  try {
+    const parsed = JSON.parse(candidate) as {
+      summary?: unknown;
+      files?: Array<{ path?: unknown; content?: unknown }>;
+    };
+
+    if (!Array.isArray(parsed.files)) return buildFallbackResult(prompt, projectName);
+
+    const files = parsed.files
+      .map((file) => ({
+        path: typeof file.path === "string" ? file.path.trim().replace(/^\/+/, "").replace(/\\/g, "/") : "",
+        content: typeof file.content === "string" ? file.content : "",
+      }))
+      .filter((file) => file.path.length > 0);
+
+    if (files.length < 3) return buildFallbackResult(prompt, projectName);
+
+    return {
+      summary: typeof parsed.summary === "string" ? parsed.summary : "Проект сгенерирован и готов к запуску.",
+      files,
+    };
+  } catch {
+    return buildFallbackResult(prompt, projectName);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -71,10 +142,11 @@ Output ONLY strict JSON without markdown or extra text in this format:
   ]
 }
 Rules:
-- Return at least 3 files.
+- Return at least 8 files for a full project starter.
 - Paths must be valid relative paths.
 - Content must be complete file contents.
 - The project must match the user request and be runnable.
+- Never answer as chat text. Always fill "files" with source files.
 Project context: Name: "${projectName || "Unnamed"}", Description: "${projectDescription || "No description"}"
 Respond in Russian.`;
 
@@ -112,16 +184,8 @@ Respond in Russian.`;
     const data = await response.json();
     const rawResult = data.choices?.[0]?.message?.content;
 
-    let result = rawResult;
-
-    try {
-      const parsed = JSON.parse(rawResult);
-      if (!Array.isArray(parsed?.files) || parsed.files.length === 0) {
-        result = JSON.stringify(buildFallbackResult(prompt, projectName));
-      }
-    } catch {
-      result = JSON.stringify(buildFallbackResult(prompt, projectName));
-    }
+    const parsedResult = parseProjectPayload(rawResult, prompt, projectName);
+    const result = JSON.stringify(parsedResult);
 
     return new Response(JSON.stringify({ result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
