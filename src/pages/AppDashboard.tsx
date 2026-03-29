@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, LogOut, Zap, FolderOpen } from "lucide-react";
+import { Plus, LogOut, FolderOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import CreditsInfoDialog from "@/components/CreditsInfoDialog";
 
 interface Project {
   id: string;
@@ -70,10 +71,7 @@ const AppDashboard = () => {
       <header className="border-b border-border px-6 py-4 flex items-center justify-between">
         <Link to="/" className="text-lg font-bold text-foreground tracking-tight">Lurk Dev</Link>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Zap className="w-4 h-4 text-accent" />
-            <span>{credits} кредитов</span>
-          </div>
+          <CreditsInfoDialog credits={credits} />
           <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground">
             <LogOut className="w-4 h-4 mr-1" /> Выйти
           </Button>
@@ -87,6 +85,13 @@ const AppDashboard = () => {
             <Plus className="w-4 h-4 mr-1" /> Новый проект
           </Button>
         </div>
+
+
+        {credits <= 0 && (
+          <div className="mb-6 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            You've reached your limit. Next credits refresh at 00:00 (Europe/Moscow).
+          </div>
+        )}
 
         {showNew && (
           <div className="gradient-card border border-border rounded-xl p-6 mb-6">
