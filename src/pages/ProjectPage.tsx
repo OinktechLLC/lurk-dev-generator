@@ -45,7 +45,7 @@ const ProjectPage = () => {
   }, [generations]);
 
   const loadProject = async () => {
-    const { data } = await supabase.from("projects").select("*").eq("id", id).single();
+    const { data } = await supabase.from("projects").select("*").eq("id", id!).single();
     if (data) setProject(data as Project);
   };
 
@@ -53,7 +53,7 @@ const ProjectPage = () => {
     const { data } = await supabase
       .from("generations")
       .select("*")
-      .eq("project_id", id)
+      .eq("project_id", id!)
       .order("created_at", { ascending: true });
     if (data) setGenerations(data as Generation[]);
   };
@@ -79,7 +79,7 @@ const ProjectPage = () => {
       // Insert generation record
       const { data: gen, error: genErr } = await supabase
         .from("generations")
-        .insert({ project_id: id, prompt: currentPrompt })
+        .insert({ project_id: id!, prompt: currentPrompt })
         .select()
         .single();
       if (genErr) throw genErr;
