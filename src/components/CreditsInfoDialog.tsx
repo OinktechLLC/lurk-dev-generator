@@ -35,7 +35,7 @@ const CreditsInfoDialog = ({ credits, dailyLimit = 5 }: CreditsInfoDialogProps) 
         <DialogHeader>
           <DialogTitle>Daily credits</DialogTitle>
           <DialogDescription>
-            Track your usage just like Lovable style credit meter.
+            Track your usage with a simple daily credit meter.
           </DialogDescription>
         </DialogHeader>
 
