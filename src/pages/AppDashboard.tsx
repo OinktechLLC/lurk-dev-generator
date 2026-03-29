@@ -44,11 +44,9 @@ const AppDashboard = () => {
   };
 
   const loadCredits = async () => {
-    const { data } = await supabase
-      .from("credits")
-      .select("credits")
-      .single();
-    if (data) setCredits((data as Credits).credits);
+    if (!user) return;
+    const { data } = await supabase.rpc("check_and_reset_credits", { p_user_id: user.id });
+    if (typeof data === "number") setCredits(data);
   };
 
   const createProject = async () => {
