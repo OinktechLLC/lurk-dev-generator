@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Send, Zap, Loader2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportProjectAsZip } from "@/lib/exportZip";
+import { parseGeneratedProject } from "@/lib/generatedProject";
 
 interface Project {
   id: string;
@@ -193,7 +194,32 @@ const ProjectPage = () => {
                 {g.result && (
                   <div className="flex justify-start">
                     <div className="gradient-card border border-border rounded-2xl rounded-bl-md px-4 py-3 max-w-2xl">
-                      <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed">{g.result}</pre>
+                      {(() => {
+                        const parsed = parseGeneratedProject(g.result);
+
+                        if (!parsed) {
+                          return <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed">{g.result}</pre>;
+                        }
+
+                        return (
+                          <div className="space-y-3">
+                            <p className="text-sm text-foreground whitespace-pre-wrap">{parsed.summary}</p>
+                            <div className="rounded-lg border border-border/70 bg-background/60 p-3">
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Файлы проекта</p>
+                              <ul className="space-y-1">
+                                {parsed.files.slice(0, 12).map((file) => (
+                                  <li key={file.path} className="text-xs text-foreground font-mono">{file.path}</li>
+                                ))}
+                              </ul>
+                              {parsed.files.length > 12 && (
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  + ещё {parsed.files.length - 12} файлов
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
