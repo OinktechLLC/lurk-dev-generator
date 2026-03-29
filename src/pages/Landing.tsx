@@ -66,12 +66,12 @@ const Landing = () => {
             <p className="text-base md:text-lg text-muted-foreground max-w-xl mb-8">
               Lurk Dev создаёт полноценные файлы проекта: структуру, компоненты, стили и готовый ZIP для запуска.
             </p>
-            <form onSubmit={handleQuickStart} className="flex flex-col sm:flex-row gap-3 mb-8 max-w-2xl">
+            <form onSubmit={handleQuickStart} className="flex flex-col sm:flex-row gap-3 mb-8 max-w-3xl">
               <Input
                 value={quickPrompt}
                 onChange={(e) => setQuickPrompt(e.target.value)}
                 placeholder="Например: CRM для салона красоты"
-                className="bg-background/90 border-border"
+                className="bg-background/90 border-border sm:flex-1"
               />
               <Button type="submit" size="lg" className="gradient-primary text-primary-foreground border-0 whitespace-nowrap">
                 Открыть чистый проект
