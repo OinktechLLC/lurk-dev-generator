@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Send, Zap, Loader2, Download } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportProjectAsZip } from "@/lib/exportZip";
 import { parseGeneratedProject } from "@/lib/generatedProject";
+import CreditsInfoDialog from "@/components/CreditsInfoDialog";
 
 interface Project {
   id: string;
@@ -144,10 +145,7 @@ const ProjectPage = () => {
           >
             <Download className="w-4 h-4 mr-1" /> ZIP
           </Button>
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Zap className="w-4 h-4 text-accent" />
-            <span>{credits} кредитов</span>
-          </div>
+          <CreditsInfoDialog credits={credits} />
         </div>
       </header>
 
@@ -174,6 +172,12 @@ const ProjectPage = () => {
 
         {/* Right: Chat + Results */}
         <main className="flex-1 flex flex-col min-h-0">
+          {credits <= 0 && (
+            <div className="mx-6 mt-6 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              You've reached your limit. Next credits refresh at 00:00 (Europe/Moscow).
+            </div>
+          )}
+
           {/* Chat messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {generations.length === 0 && (
@@ -243,9 +247,9 @@ const ProjectPage = () => {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 className="bg-background border-border flex-1"
-                disabled={generating}
+                disabled={generating || credits <= 0}
               />
-              <Button type="submit" disabled={generating || !prompt.trim()} className="gradient-primary text-primary-foreground border-0">
+              <Button type="submit" disabled={generating || !prompt.trim() || credits <= 0} className="gradient-primary text-primary-foreground border-0">
                 <Send className="w-4 h-4" />
               </Button>
             </form>
