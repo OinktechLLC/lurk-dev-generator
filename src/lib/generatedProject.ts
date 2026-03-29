@@ -14,6 +14,7 @@ interface RawGenerationShape {
 }
 
 const JSON_BLOCK_REGEX = /```json\s*([\s\S]*?)```/i;
+const GENERIC_BLOCK_REGEX = /```[a-zA-Z0-9_-]*\s*([\s\S]*?)```/i;
 
 function normalizePath(path: string) {
   return path
@@ -26,10 +27,15 @@ function normalizePath(path: string) {
 export function parseGeneratedProject(result: string | null | undefined): ParsedGeneration | null {
   if (!result) return null;
 
-  const candidate = result.match(JSON_BLOCK_REGEX)?.[1]?.trim() || result.trim();
+  const normalized = result.trim();
+  const candidate =
+    result.match(JSON_BLOCK_REGEX)?.[1]?.trim() ||
+    result.match(GENERIC_BLOCK_REGEX)?.[1]?.trim() ||
+    normalized;
+  const objectCandidate = extractFirstJsonObject(candidate) || extractFirstJsonObject(normalized) || candidate;
 
   try {
-    const parsed = JSON.parse(candidate) as RawGenerationShape;
+    const parsed = JSON.parse(objectCandidate) as RawGenerationShape;
 
     if (!Array.isArray(parsed.files)) return null;
 
@@ -49,4 +55,41 @@ export function parseGeneratedProject(result: string | null | undefined): Parsed
   } catch {
     return null;
   }
+}
+
+function extractFirstJsonObject(input: string) {
+  const start = input.indexOf("{");
+  if (start < 0) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < input.length; i += 1) {
+    const char = input[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === "\"") {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = true;
+      continue;
+    }
+
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return input.slice(start, i + 1);
+    }
+  }
+
+  return null;
 }
