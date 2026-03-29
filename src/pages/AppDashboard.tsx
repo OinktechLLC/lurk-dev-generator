@@ -60,6 +60,8 @@ const AppDashboard = () => {
         return;
       }
 
+      localStorage.setItem(`project_autostart_prompt:${data.id}`, promptFromLanding);
+
       navigate(`/app/project/${data.id}`);
     };
 

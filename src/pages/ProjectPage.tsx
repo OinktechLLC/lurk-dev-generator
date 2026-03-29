@@ -33,6 +33,7 @@ const ProjectPage = () => {
   const [credits, setCredits] = useState(5);
   const [prompt, setPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
+  const autoStartHandledRef = useRef(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -67,15 +68,15 @@ const ProjectPage = () => {
     if (typeof data === "number") setCredits(data);
   };
 
-  const handleGenerate = async () => {
-    if (!prompt.trim() || generating) return;
+  const runGeneration = async (promptText: string) => {
+    if (!promptText.trim() || generating) return;
     if (credits <= 0) {
       toast({ title: "Нет кредитов", description: "Кредиты обновятся завтра в 00:00 МСК", variant: "destructive" });
       return;
     }
 
     setGenerating(true);
-    const currentPrompt = prompt;
+    const currentPrompt = promptText;
     setPrompt("");
 
     try {
@@ -118,6 +119,27 @@ const ProjectPage = () => {
       setGenerating(false);
     }
   };
+
+  const handleGenerate = async () => {
+    await runGeneration(prompt);
+  };
+
+  useEffect(() => {
+    if (!id || !project || autoStartHandledRef.current || generating) return;
+
+    const autostartPrompt = localStorage.getItem(`project_autostart_prompt:${id}`)?.trim();
+    if (!autostartPrompt) return;
+
+    if (generations.length > 0) {
+      localStorage.removeItem(`project_autostart_prompt:${id}`);
+      autoStartHandledRef.current = true;
+      return;
+    }
+
+    autoStartHandledRef.current = true;
+    localStorage.removeItem(`project_autostart_prompt:${id}`);
+    void runGeneration(autostartPrompt);
+  }, [generating, generations.length, id, project]);
 
   if (loading || !project) {
     return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Загрузка...</div>;
