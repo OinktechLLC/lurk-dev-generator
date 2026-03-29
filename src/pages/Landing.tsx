@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Zap, Shield, Clock, Sparkles, Code, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import auroraBg from "@/assets/aurora-bg.jpg";
 
 const features = [
   { icon: Sparkles, title: "AI-генерация", desc: "Опишите идею — получите готовый проект за секунды" },
@@ -14,8 +15,8 @@ const features = [
 const Landing = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Aurora background */}
-      <div className="absolute inset-0 aurora-bg opacity-40 pointer-events-none" />
+      {/* Aurora background image */}
+      <img src={auroraBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 pointer-events-none" width={1920} height={1080} />
 
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-5">
