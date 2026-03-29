@@ -16,10 +16,6 @@ interface Project {
   created_at: string;
 }
 
-interface Credits {
-  credits: number;
-}
-
 const AppDashboard = () => {
   const { user, loading, signOut } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
