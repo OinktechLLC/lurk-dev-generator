@@ -65,8 +65,9 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-border py-8 text-center text-sm text-muted-foreground">
-        © 2026 Lurk Dev. Все права защищены.
+      <footer className="relative z-10 border-t border-border py-8 px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
+        <span>© 2026 TOO Oink Tech Ltd Co. Все права защищены.</span>
+        <Link to="/about" className="hover:text-foreground transition-colors">FAQ & О проекте</Link>
       </footer>
     </div>
   );
