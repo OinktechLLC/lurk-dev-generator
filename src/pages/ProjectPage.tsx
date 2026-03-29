@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Send, Zap, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Zap, Loader2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { exportProjectAsZip } from "@/lib/exportZip";
 
 interface Project {
   id: string;
@@ -132,9 +133,20 @@ const ProjectPage = () => {
           </Link>
           <span className="text-foreground font-semibold">{project.name}</span>
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Zap className="w-4 h-4 text-accent" />
-          <span>{credits} кредитов</span>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={generations.filter(g => g.result).length === 0}
+            onClick={() => exportProjectAsZip(project.name, generations)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Download className="w-4 h-4 mr-1" /> ZIP
+          </Button>
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Zap className="w-4 h-4 text-accent" />
+            <span>{credits} кредитов</span>
+          </div>
         </div>
       </header>
 
