@@ -1,8 +1,8 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Zap, Clock, Sparkles, Code, Layers, Rocket, FileCode2, Stars } from "lucide-react";
+import { Zap, Clock, Sparkles, Code, Layers, Rocket, FileCode2, Stars, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import auroraBg from "@/assets/aurora-bg.jpg";
 
 const features = [
@@ -18,6 +18,12 @@ const stats = [
   { label: "Бесплатные кредиты", value: "5 / день" },
   { label: "Среднее время", value: "~20 сек" },
   { label: "Поддержка стеков", value: "React, Vue, Node" },
+];
+
+const promptExamples = [
+  "Лендинг AI-агентства с калькулятором стоимости",
+  "SaaS dashboard для HR с авторизацией и графиками",
+  "Интернет-магазин кофе с корзиной и оплатой",
 ];
 
 const Landing = () => {
@@ -66,16 +72,36 @@ const Landing = () => {
             <p className="text-base md:text-lg text-muted-foreground max-w-xl mb-8">
               Lurk Dev создаёт полноценные файлы проекта: структуру, компоненты, стили и готовый ZIP для запуска.
             </p>
-            <form onSubmit={handleQuickStart} className="flex flex-col sm:flex-row gap-3 mb-8 max-w-3xl">
-              <Input
-                value={quickPrompt}
-                onChange={(e) => setQuickPrompt(e.target.value)}
-                placeholder="Например: CRM для салона красоты"
-                className="bg-background/90 border-border sm:flex-1"
-              />
-              <Button type="submit" size="lg" className="gradient-primary text-primary-foreground border-0 whitespace-nowrap">
-                Открыть чистый проект
-              </Button>
+            <form onSubmit={handleQuickStart} className="mb-8 max-w-3xl">
+              <div className="rounded-2xl border border-border/80 bg-background/80 p-3 backdrop-blur-md shadow-xl">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2 px-1">
+                  <WandSparkles className="w-3.5 h-3.5 text-primary" />
+                  Опишите проект простым языком — отредактировать можно прямо здесь
+                </div>
+                <Textarea
+                  value={quickPrompt}
+                  onChange={(e) => setQuickPrompt(e.target.value)}
+                  placeholder="Сделай лендинг для студии ремонта квартир: hero-блок, услуги, калькулятор, отзывы, CTA с формой заявки и адаптив под mobile."
+                  className="min-h-[130px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base"
+                />
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap gap-2">
+                    {promptExamples.map((example) => (
+                      <button
+                        key={example}
+                        type="button"
+                        onClick={() => setQuickPrompt(example)}
+                        className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                      >
+                        {example}
+                      </button>
+                    ))}
+                  </div>
+                  <Button type="submit" size="lg" className="gradient-primary text-primary-foreground border-0 whitespace-nowrap">
+                    Создать проект
+                  </Button>
+                </div>
+              </div>
             </form>
             <div className="flex flex-wrap gap-3 mb-8">
               <Link to="/app">
