@@ -3,12 +3,13 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ArrowLeft, Send, Loader2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportProjectAsZip } from "@/lib/exportZip";
 import { parseGeneratedProject } from "@/lib/generatedProject";
 import CreditsInfoDialog from "@/components/CreditsInfoDialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 
 interface Project {
   id: string;
@@ -32,6 +33,8 @@ const ProjectPage = () => {
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [credits, setCredits] = useState(5);
   const [prompt, setPrompt] = useState("");
+  const [selectedIntent, setSelectedIntent] = useState<string | null>(null);
+  const [selectedDepth, setSelectedDepth] = useState<"fast" | "balanced" | "deep">("balanced");
   const [generating, setGenerating] = useState(false);
   const autoStartHandledRef = useRef(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -120,8 +123,30 @@ const ProjectPage = () => {
     }
   };
 
+  const intentPresets = [
+    { label: "Новый экран", value: "Сделай новый экран с продуманным UX и адаптивной версткой." },
+    { label: "Прокачать UI", value: "Улучши текущий UI: отступы, типографику, контраст и визуальную иерархию." },
+    { label: "Новая функция", value: "Добавь новый функционал с UI, логикой и состояниями загрузки/ошибки." },
+    { label: "Рефакторинг", value: "Сделай рефакторинг кода без поломки поведения и с более чистой структурой." },
+  ];
+
+  const depthInstructions: Record<"fast" | "balanced" | "deep", string> = {
+    fast: "Сделай коротко и быстро, только самое важное.",
+    balanced: "Дай сбалансированное решение: качество + скорость.",
+    deep: "Сделай максимально тщательно: продумай UX-детали, edge-cases и структуру кода.",
+  };
+
+  const buildPrompt = () => {
+    const parts = [prompt.trim()];
+    if (selectedIntent) {
+      parts.push(`Контекст задачи: ${selectedIntent}`);
+    }
+    parts.push(`Режим выполнения: ${depthInstructions[selectedDepth]}`);
+    return parts.filter(Boolean).join("\n\n");
+  };
+
   const handleGenerate = async () => {
-    await runGeneration(prompt);
+    await runGeneration(buildPrompt());
   };
 
   useEffect(() => {
@@ -263,17 +288,54 @@ const ProjectPage = () => {
 
           {/* Input */}
           <div className="border-t border-border p-4">
-            <form onSubmit={(e) => { e.preventDefault(); handleGenerate(); }} className="flex gap-2">
-              <Input
-                placeholder="Опишите, что хотите сгенерировать..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="bg-background border-border flex-1"
-                disabled={generating || credits <= 0}
-              />
-              <Button type="submit" disabled={generating || !prompt.trim() || credits <= 0} className="gradient-primary text-primary-foreground border-0">
-                <Send className="w-4 h-4" />
-              </Button>
+            <form onSubmit={(e) => { e.preventDefault(); handleGenerate(); }} className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {intentPresets.map((intent) => (
+                  <button
+                    key={intent.label}
+                    type="button"
+                    className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                      selectedIntent === intent.value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                    onClick={() => setSelectedIntent((prev) => (prev === intent.value ? null : intent.value))}
+                    disabled={generating || credits <= 0}
+                  >
+                    {intent.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="rounded-2xl border border-border bg-background p-3">
+                <Textarea
+                  placeholder="Опиши задачу максимально конкретно: что изменить, где, и какой ожидается результат..."
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="min-h-[100px] resize-y border-0 px-1 py-0 shadow-none focus-visible:ring-0"
+                  disabled={generating || credits <= 0}
+                />
+
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Режим:</span>
+                    <button type="button" onClick={() => setSelectedDepth("fast")} className="bg-transparent">
+                      <Badge variant={selectedDepth === "fast" ? "default" : "secondary"}>Быстро</Badge>
+                    </button>
+                    <button type="button" onClick={() => setSelectedDepth("balanced")} className="bg-transparent">
+                      <Badge variant={selectedDepth === "balanced" ? "default" : "secondary"}>Баланс</Badge>
+                    </button>
+                    <button type="button" onClick={() => setSelectedDepth("deep")} className="bg-transparent">
+                      <Badge variant={selectedDepth === "deep" ? "default" : "secondary"}>Глубоко</Badge>
+                    </button>
+                  </div>
+
+                  <Button type="submit" disabled={generating || !prompt.trim() || credits <= 0} className="gradient-primary text-primary-foreground border-0">
+                    <Send className="w-4 h-4 mr-2" />
+                    Отправить
+                  </Button>
+                </div>
+              </div>
             </form>
           </div>
         </main>
