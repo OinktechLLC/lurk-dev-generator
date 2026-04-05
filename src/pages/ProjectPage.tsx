@@ -3,13 +3,15 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send, Loader2, Download } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Download, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportProjectAsZip } from "@/lib/exportZip";
 import { parseGeneratedProject } from "@/lib/generatedProject";
 import CreditsInfoDialog from "@/components/CreditsInfoDialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 interface Project {
   id: string;
@@ -149,6 +151,54 @@ const ProjectPage = () => {
     await runGeneration(buildPrompt());
   };
 
+  const copyGenerationCode = async (result: string) => {
+    const parsed = parseGeneratedProject(result);
+    if (!parsed) {
+      toast({
+        title: "Нечего копировать",
+        description: "Ответ не содержит распознанной структуры файлов.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const payload = parsed.files
+      .map((file) => `// FILE: ${file.path}\n${file.content}`)
+      .join("\n\n");
+
+    try {
+      await navigator.clipboard.writeText(payload);
+      toast({ title: "Код скопирован", description: "Код файлов добавлен в буфер обмена." });
+    } catch {
+      toast({
+        title: "Не удалось скопировать",
+        description: "Браузер заблокировал доступ к буферу обмена.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const downloadGenerationCode = async (result: string, generationId: string) => {
+    const parsed = parseGeneratedProject(result);
+    if (!parsed) {
+      toast({
+        title: "Нечего скачивать",
+        description: "Ответ не содержит распознанной структуры файлов.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const zip = new JSZip();
+    parsed.files.forEach((file) => zip.file(file.path, file.content));
+    zip.file(
+      "README.md",
+      `# ${project?.name || "project"}\n\nГенерация: ${generationId}\n\nСобрано в Lurk Dev.`,
+    );
+    const blob = await zip.generateAsync({ type: "blob" });
+    saveAs(blob, `${(project?.name || "project").replace(/\s+/g, "_").toLowerCase()}_${generationId.slice(0, 8)}.zip`);
+  };
+
   useEffect(() => {
     if (!id || !project || autoStartHandledRef.current || generating) return;
 
@@ -255,6 +305,24 @@ const ProjectPage = () => {
                         return (
                           <div className="space-y-3">
                             <p className="text-sm text-foreground whitespace-pre-wrap">{parsed.summary}</p>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => void copyGenerationCode(g.result)}
+                              >
+                                <Copy className="w-4 h-4 mr-1" />
+                                Копировать код
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => void downloadGenerationCode(g.result, g.id)}
+                              >
+                                <Download className="w-4 h-4 mr-1" />
+                                Скачать код
+                              </Button>
+                            </div>
                             <div className="rounded-lg border border-border/70 bg-background/60 p-3">
                               <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Файлы проекта</p>
                               <ul className="space-y-1">

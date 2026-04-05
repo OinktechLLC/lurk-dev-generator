@@ -64,6 +64,11 @@ const About = () => {
               практиками индустрии.
             </p>
           </div>
+          <div className="mt-4">
+            <Link to="/docs" className="text-sm text-primary hover:underline">
+              Открыть политику конфиденциальности, условия использования и гайд по деплою →
+            </Link>
+          </div>
         </section>
 
         {/* FAQ */}
