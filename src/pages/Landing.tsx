@@ -170,6 +170,7 @@ const Landing = () => {
         <span>© 2026 TOO Oink Tech Ltd Co. Все права защищены.</span>
         <div className="flex items-center gap-5">
           <Link to="/about" className="hover:text-foreground transition-colors">FAQ</Link>
+          <Link to="/docs" className="hover:text-foreground transition-colors">Документы</Link>
           <Link to="/auth" className="hover:text-foreground transition-colors">Войти</Link>
         </div>
       </footer>

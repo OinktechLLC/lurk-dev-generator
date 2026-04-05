@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import AppDashboard from "./pages/AppDashboard";
 import ProjectPage from "./pages/ProjectPage";
 import About from "./pages/About";
+import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/app" element={<AppDashboard />} />
           <Route path="/app/project/:id" element={<ProjectPage />} />
           <Route path="/about" element={<About />} />
+          <Route path="/docs" element={<Docs />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
